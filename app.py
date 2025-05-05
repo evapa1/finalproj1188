@@ -1075,7 +1075,7 @@ def daily_challenge():
     
     # Get the daily challenge question
     current_question = get_daily_challenge()
-    attempts_left = float('inf')  # Unlimited attempts for daily challenge
+    attempts_left = 1000000  # Unlimited attempts for daily challenge
     question_attempts[id(current_question)] = 0  # Reset attempts for this question
     
     # Initialize streak counter if it doesn't exist
@@ -1292,7 +1292,7 @@ def submit():
     if is_daily_challenge:
         # For daily challenge, don't decrement attempts (unlimited attempts)
         # And don't move to next question on failure
-        attempts_left = float('inf')  # Set to infinity to indicate unlimited attempts
+        attempts_left = 1000000  # Set to infinity to indicate unlimited attempts
     else:
         # For regular practice and time attack, use limited attempts
         attempts_left -= 1
