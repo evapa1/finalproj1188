@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI vs Coder</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta name="current-streak" content="{{ streak }}">
+    <meta name="max-streak" content="{{ max_streak }}">
+    <style>
+        /* Additional styles specific to this page */
+        .nav-menu {
+            position: relative;
+            top: 0;
+            right: 0;
+            width: auto;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-menu">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/game" class="nav-link">Practice</a>
+            <a href="/daily-challenge" class="nav-link">Daily Challenge</a>
+            <a href="/time-attack" class="nav-link">Time Attack</a>
+            <a href="/progress" class="nav-link">Progress</a>
+            <a href="/about" class="nav-link">About</a>
+        </div>
+        
+        <h1>🤖 AI vs Coder 👩‍💻</h1>
+
+        <div class="mode-toggle">
+            <span class="mode-label">
+                Beginner Mode
+                <span class="tooltip">Provides detailed feedback on test failures, including hints and explanations to help you learn.</span>
+            </span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="mode-toggle">
+                <span class="slider"></span>
+            </label>
+            <span class="mode-label">
+                Challenge Mode
+                <span class="tooltip">Simulates a real coding interview with minimal feedback - just pass/fail results without hints.</span>
+            </span>
+        </div>
+
+        <div class="question-box">
+            <h2 id="prompt">{{ question.prompt }}</h2>
+            <span id="difficulty-badge" class="badge">
+                {{ 'Easy' if question.difficulty == 1 else ('Medium' if question.difficulty == 2 else 'Hard') }}
+            </span>
+        </div>
+
+        <textarea id="code" placeholder="# Write your code here..."></textarea>
+
+        <div class="button-container">
+            <button id="submit-btn" onclick="submitCode()">Submit Code</button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script src="/static/script.js"></script>
+    <script>
+        window.onload = function() {
+            // Set initial difficulty badge color based on first question
+            const badge = document.getElementById('difficulty-badge');
+            const difficulty = {{ question.difficulty }};
+            if (difficulty === 1) {
+                badge.textContent = "Easy";
+                badge.style.backgroundColor = "green";
+            } else if (difficulty === 2) {
+                badge.textContent = "Medium";
+                badge.style.backgroundColor = "orange";
+            } else {
+                badge.textContent = "Hard";
+                badge.style.backgroundColor = "red";
+            }
+        
+            // Allow pressing Tab inside the code area
+            document.getElementById('code').addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const codeArea = this;
+                    const start = codeArea.selectionStart;
+                    const end = codeArea.selectionEnd;
+        
+                    codeArea.value = codeArea.value.substring(0, start) + "    " + codeArea.value.substring(end);
+                    codeArea.selectionStart = codeArea.selectionEnd = start + 4;
+                }
+            });
+            
+            // Set default mode (Beginner)
+            localStorage.setItem('challengeMode', localStorage.getItem('challengeMode') || 'false');
+            
+            // Set up mode toggle
+            const modeToggle = document.getElementById('mode-toggle');
+            modeToggle.checked = localStorage.getItem('challengeMode') === 'true';
+            modeToggle.addEventListener('change', function() {
+                localStorage.setItem('challengeMode', this.checked);
+            });
+        };
+    </script>
+</body>
+</html>

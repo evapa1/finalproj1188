@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Daily Challenge - AI vs Coder</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta name="current-streak" content="{{ streak }}">
+    <meta name="max-streak" content="{{ max_streak }}">
+    <meta name="daily-streak" content="{{ daily_streak }}">
+    <meta name="max-daily-streak" content="{{ max_daily_streak }}">
+    <meta name="is-daily-challenge" content="true">
+    <style>
+        /* Navigation styles are now in the main CSS file */
+        
+        /* Additional styles specific to this page */
+        .nav-menu {
+            position: relative;
+            top: 0;
+            right: 0;
+            width: auto;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .daily-challenge-header {
+            background-color: #ffecb3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            border-left: 5px solid #ffc107;
+        }
+        
+        .daily-challenge-header h2 {
+            margin: 0;
+            color: #ff6f00;
+        }
+        
+        .daily-challenge-header p {
+            margin: 5px 0 0;
+            color: #555;
+        }
+        
+        .daily-streak-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #fff8e1;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .daily-streak-box {
+            text-align: center;
+            padding: 8px 15px;
+            border-radius: 6px;
+            background-color: #fff3e0;
+            border: 1px solid #ffe0b2;
+        }
+        
+        .daily-streak-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ff6f00;
+        }
+        
+        .daily-streak-label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .completion-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: white;
+            background-color: #4CAF50;
+            margin-top: 10px;
+        }
+        
+        .feedback-message {
+            background-color: #ffebee;
+            color: #d32f2f;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+            border-left: 4px solid #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-menu">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/game" class="nav-link">Practice</a>
+            <a href="/daily-challenge" class="nav-link">Daily Challenge</a>
+            <a href="/time-attack" class="nav-link">Time Attack</a>
+            <a href="/progress" class="nav-link">Progress</a>
+            <a href="/about" class="nav-link">About</a>
+        </div>
+        
+        <div class="daily-challenge-header">
+            <h2>🏆 Daily Coding Challenge 🏆</h2>
+            <p>A new hard problem every day. Can you solve today's challenge?</p>
+            {% if has_completed %}
+            <div class="completion-badge">✅ Completed Today</div>
+            {% endif %}
+        </div>
+        
+        <div class="daily-streak-container">
+            <div class="daily-streak-box">
+                <div class="daily-streak-value" id="current-daily-streak">{{ daily_streak }}</div>
+                <div class="daily-streak-label">Daily Streak</div>
+            </div>
+            <div class="daily-streak-box">
+                <div class="daily-streak-value" id="max-daily-streak">{{ max_daily_streak }}</div>
+                <div class="daily-streak-label">Best Daily Streak</div>
+            </div>
+        </div>
+
+        <div class="question-box">
+            <h2 id="prompt">{{ question.prompt }}</h2>
+            <span id="difficulty-badge" class="badge" style="background-color: red;">
+                Hard
+            </span>
+        </div>
+
+        <textarea id="code" placeholder="# Write your code here..."></textarea>
+
+        <div class="button-container">
+            <button id="submit-btn">Submit Code</button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Track attempts for the daily challenge
+        let dailyChallengeAttempts = 0;
+        
+        window.onload = function() {
+            // Initialize attempt counter from localStorage
+            dailyChallengeAttempts = parseInt(localStorage.getItem('dailyChallengeAttempts') || '0');
+            
+            // Set up submit button event listener
+            document.getElementById('submit-btn').addEventListener('click', function() {
+                submitDailyChallenge();
+            });
+            
+            // Allow pressing Tab inside the code area
+            document.getElementById('code').addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const codeArea = this;
+                    const start = codeArea.selectionStart;
+                    const end = codeArea.selectionEnd;
+        
+                    codeArea.value = codeArea.value.substring(0, start) + "    " + codeArea.value.substring(end);
+                    codeArea.selectionStart = codeArea.selectionEnd = start + 4;
+                }
+            });
+            
+            // Initialize streak display
+            const streakValue = parseInt(document.querySelector('meta[name="current-streak"]')?.content || '0');
+            const maxStreakValue = parseInt(document.querySelector('meta[name="max-streak"]')?.content || '0');
+            
+            // Initialize daily streak display
+            const dailyStreakValue = parseInt(document.querySelector('meta[name="daily-streak"]')?.content || '0');
+            const maxDailyStreakValue = parseInt(document.querySelector('meta[name="max-daily-streak"]')?.content || '0');
+        };
+        
+        // Function to update streak display
+        function updateStreakDisplay(currentStreak, maxStreak, streakBroken, justSolved) {
+            // Create streak container if it doesn't exist
+            let streakContainer = document.getElementById('streak-container');
+            if (!streakContainer) {
+                streakContainer = document.createElement('div');
+                streakContainer.id = 'streak-container';
+                streakContainer.className = 'streak-container';
+                
+                // Create current streak box
+                const currentStreakBox = document.createElement('div');
+                currentStreakBox.className = 'streak-box current';
+                currentStreakBox.innerHTML = `
+                    <div class="streak-value" id="current-streak">0</div>
+                    <div class="streak-label">Current Streak</div>
+                `;
+                
+                // Create max streak box
+                const maxStreakBox = document.createElement('div');
+                maxStreakBox.className = 'streak-box max';
+                maxStreakBox.innerHTML = `
+                    <div class="streak-value" id="max-streak">0</div>
+                    <div class="streak-label">Best Streak</div>
+                `;
+                
+                streakContainer.appendChild(currentStreakBox);
+                streakContainer.appendChild(maxStreakBox);
+                
+                // Insert at the top of the container, but after any daily challenge header if it exists
+                const container = document.querySelector('.container');
+                const dailyHeader = document.querySelector('.daily-challenge-header');
+                
+                if (dailyHeader) {
+                    container.insertBefore(streakContainer, dailyHeader.nextSibling);
+                } else {
+                    container.insertBefore(streakContainer, container.firstChild);
+                }
+            }
+            
+            // Update streak values
+            const currentStreakElement = document.getElementById('current-streak');
+            const maxStreakElement = document.getElementById('max-streak');
+            
+            if (currentStreakElement && maxStreakElement) {
+                // Remove any existing animation classes
+                currentStreakElement.classList.remove('streak-increase', 'streak-broken');
+                
+                // Update the values
+                currentStreakElement.textContent = currentStreak;
+                maxStreakElement.textContent = maxStreak;
+                
+                // Add animation if streak changed
+                if (justSolved && currentStreak > 0) {
+                    currentStreakElement.classList.add('streak-increase');
+                } else if (streakBroken) {
+                    currentStreakElement.classList.add('streak-broken');
+                }
+            }
+        }
+        
+        // Function to update daily streak display
+        function updateDailyStreakDisplay(currentStreak, maxStreak) {
+            const currentStreakElement = document.getElementById('current-daily-streak');
+            const maxStreakElement = document.getElementById('max-daily-streak');
+            
+            if (currentStreakElement && maxStreakElement) {
+                currentStreakElement.textContent = currentStreak;
+                maxStreakElement.textContent = maxStreak;
+            }
+        }
+        
+        // Submit function for daily challenge
+        function submitDailyChallenge() {
+            const code = document.getElementById('code').value;
+            const challengeMode = localStorage.getItem('challengeMode') === 'true';
+
+            fetch('/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    code: code,
+                    challengeMode: challengeMode,
+                    isDailyChallenge: true
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Response data:", data);
+
+                if (!data.success) {
+                    document.getElementById('result').innerText = 'Error: ' + data.error;
+                    return;
+                }
+                
+                // Show an alert if the solution is incorrect
+                if (data.passed < data.total) {
+                    dailyChallengeAttempts++;
+                    // Save attempts to localStorage
+                    localStorage.setItem('dailyChallengeAttempts', dailyChallengeAttempts);
+                    alert(`❌ Your solution is incorrect. Try again! (Attempt #${dailyChallengeAttempts})`);
+                } else {
+                    // Reset attempts counter if solution is correct
+                    dailyChallengeAttempts = 0;
+                    localStorage.setItem('dailyChallengeAttempts', 0);
+                }
+
+                // Update streak counter
+                updateStreakDisplay(data.streak, data.max_streak, data.streak_broken, data.passed === data.total);
+                
+                // Update daily streak counter
+                updateDailyStreakDisplay(data.daily_streak, data.max_daily_streak);
+                
+                // Show completion badge if daily challenge was completed
+                if (data.daily_challenge_completed) {
+                    // Redirect to the success page
+                    window.location.href = '/daily-success';
+                }
+
+                // Celebratory message
+                let celebration = "";
+                if (data.passed === data.total) {
+                    celebration = "<h3 style='color:green;'>🎉 All tests passed! Great job!</h3>";
+                    if (data.daily_challenge_completed) {
+                        celebration += "<h4 style='color:#ff6f00;'>🏆 You've completed today's challenge! Come back tomorrow for a new one!</h4>";
+                    }
+                }
+
+                // Basic stats
+                let statsHTML = `
+                    Passed ${data.passed} out of ${data.total} tests.<br>
+                    Your lines: ${data.user_lines}<br>
+                    AI lines: ${data.ai_lines}<br>
+                    Attempts left: Unlimited<br>
+                    ${dailyChallengeAttempts > 0 ? `Failed attempts: ${dailyChallengeAttempts}<br>` : ''}
+                `;
+                
+                // Show hint after 2 failed attempts
+                let hintHTML = "";
+                if (data.show_hint && data.hint) {
+                    hintHTML = `
+                        <div class="hint-box">
+                            <h4>💡 Hint:</h4>
+                            <p>${data.hint}</p>
+                        </div>
+                    `;
+                }
+
+                // Show test case results with different detail levels based on mode
+                let resultsHTML = "";
+
+                // Add a prominent error message if any tests failed
+                if (data.passed < data.total) {
+                    resultsHTML += `
+                    <div style="background-color: #ffebee; color: #d32f2f; padding: 15px; 
+                         border-radius: 8px; margin: 15px 0; font-weight: bold; 
+                         border-left: 6px solid #d32f2f; font-size: 18px; text-align: center;">
+                        ❌ Your solution is incorrect. Try again! (Attempt #${dailyChallengeAttempts})
+                    </div>`;
+                }
+
+                resultsHTML += `<h3>Test Results:</h3>`;
+                
+                // Beginner mode shows detailed feedback
+                if (!challengeMode) {
+                    data.detailed_results.forEach((test, index) => {
+                        // Make failed test cases stand out more
+                        const borderStyle = test.pass ? 
+                            'border-left: 4px solid #4CAF50;' : 
+                            'border-left: 6px solid #d32f2f; background-color: #ffebee;';
+                        
+                        resultsHTML += `
+                        <div class="test-case-detail ${test.pass ? 'passed' : 'failed'}" style="${borderStyle}">
+                            <h4>Test Case ${index + 1}: ${test.pass ? '✅ Passed' : '❌ FAILED'}</h4>
+                            <p><b>Input:</b> ${JSON.stringify(test.input)}</p>
+                            <p><b>Expected Output:</b> ${JSON.stringify(test.expected)}</p>
+                            <p><b>Your Output:</b> ${JSON.stringify(test.result)}</p>
+                        `;
+                        
+                        // Add detailed feedback for failed tests
+                        if (!test.pass) {
+                            resultsHTML += `<div class="feedback-step" style="background-color: #fff8e1; border-left: 4px solid #ffc107;">
+                                <h4 style="color: #ff6f00;">What went wrong?</h4>`;
+                            
+                            // Check if it's an error message
+                            if (String(test.result).includes("Error:")) {
+                                resultsHTML += `<p>Your code threw an error: <code>${test.result}</code></p>`;
+                            } else {
+                                // Try to provide more specific feedback based on the type of mismatch
+                                if (typeof test.expected !== typeof test.result) {
+                                    resultsHTML += `<p>Type mismatch: Expected <code>${typeof test.expected}</code> but got <code>${typeof test.result}</code></p>`;
+                                } else if (Array.isArray(test.expected)) {
+                                    resultsHTML += `<p>Array values don't match. Check each element carefully.</p>`;
+                                } else if (typeof test.expected === 'object') {
+                                    resultsHTML += `<p>Object values don't match. Check all keys and values.</p>`;
+                                } else {
+                                    resultsHTML += `<p>Values don't match. Check your calculation logic.</p>`;
+                                }
+                            }
+                            
+                            if (test.hint) {
+                                resultsHTML += `<p>Suggestion: ${test.hint}</p>`;
+                            }
+                            
+                            resultsHTML += `</div>`;
+                        }
+                        
+                        resultsHTML += `</div>`;
+                    });
+                } else {
+                    // Challenge mode shows minimal feedback but with more emphasis on failures
+                    resultsHTML += `<ul style="list-style-type: none; padding-left: 0;">`;
+                    data.detailed_results.forEach((test, index) => {
+                        const itemStyle = test.pass ? 
+                            'padding: 8px; margin: 5px 0;' : 
+                            'padding: 8px; margin: 5px 0; background-color: #ffebee; border-left: 4px solid #d32f2f; font-weight: bold;';
+                        
+                        resultsHTML += `<li style="${itemStyle}">${test.pass ? '✅ Test case ' + (index+1) + ' passed' : '❌ Test case ' + (index+1) + ' FAILED'}</li>`;
+                    });
+                    resultsHTML += `</ul>`;
+                }
+
+                // Display results
+                document.getElementById('result').innerHTML = `
+                    ${celebration}
+                    ${statsHTML}
+                    ${hintHTML}
+                    ${resultsHTML}
+                `;
+            })
+            .catch(error => {
+                console.error("Error submitting code:", error);
+                document.getElementById('result').innerHTML = `
+                    <div style="color: red; font-weight: bold;">
+                        Error submitting code. Please try again.
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>

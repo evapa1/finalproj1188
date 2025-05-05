@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Time Attack - AI vs Coder</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta name="is-time-attack" content="true">
+    <style>
+        /* Additional styles specific to this page */
+        .nav-menu {
+            position: relative;
+            top: 0;
+            right: 0;
+            width: auto;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .time-attack-header {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            border-left: 5px solid #2196F3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .time-attack-header h2 {
+            margin: 0;
+            color: #0d47a1;
+        }
+        
+        .time-attack-header p {
+            margin: 5px 0 0;
+            color: #555;
+        }
+        
+        .timer-container {
+            display: flex;
+            align-items: center;
+            background-color: #f5f5f5;
+            padding: 10px 15px;
+            border-radius: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .timer {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+            font-family: monospace;
+            margin: 0 10px;
+        }
+        
+        .timer.warning {
+            color: #ff9800;
+        }
+        
+        .timer.danger {
+            color: #f44336;
+            animation: pulse 1s infinite;
+        }
+        
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .score-box {
+            text-align: center;
+            padding: 8px 15px;
+            border-radius: 6px;
+            background-color: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            flex: 1;
+            margin: 0 5px;
+        }
+        
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #388e3c;
+        }
+        
+        .score-label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .start-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .start-button:hover {
+            background-color: #388e3c;
+        }
+        
+        .start-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .game-over {
+            text-align: center;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px solid #ddd;
+        }
+        
+        .game-over h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        
+        .game-over .final-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #388e3c;
+            margin: 10px 0;
+        }
+        
+        .game-over .high-score {
+            font-size: 1.2rem;
+            color: #0d47a1;
+            margin: 10px 0;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-menu">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/game" class="nav-link">Practice</a>
+            <a href="/daily-challenge" class="nav-link">Daily Challenge</a>
+            <a href="/time-attack" class="nav-link">Time Attack</a>
+            <a href="/progress" class="nav-link">Progress</a>
+            <a href="/about" class="nav-link">About</a>
+        </div>
+        
+        <div class="time-attack-header">
+            <div>
+                <h2>⏱️ Time Attack Mode ⏱️</h2>
+                <p>Solve as many problems as possible in 10 minutes!</p>
+            </div>
+            <div class="timer-container">
+                <span class="timer" id="timer">10:00</span>
+                <button id="start-button" class="start-button">Start</button>
+            </div>
+        </div>
+        
+        <div class="score-container">
+            <div class="score-box">
+                <div class="score-value" id="current-score">0</div>
+                <div class="score-label">Current Score</div>
+            </div>
+            <div class="score-box">
+                <div class="score-value" id="high-score">{{ high_score }}</div>
+                <div class="score-label">High Score</div>
+            </div>
+        </div>
+
+        <div id="game-area" style="display: none;">
+            <div class="question-box">
+                <h2 id="prompt">{{ question.prompt }}</h2>
+                <span id="difficulty-badge" class="badge">
+                    {{ 'Easy' if question.difficulty == 1 else ('Medium' if question.difficulty == 2 else 'Hard') }}
+                </span>
+            </div>
+
+            <textarea id="code" placeholder="# Write your code here..."></textarea>
+
+            <div class="button-container">
+                <button id="submit-btn" onclick="submitTimeAttackCode()">Submit Code</button>
+            </div>
+
+            <div id="result"></div>
+        </div>
+        
+        <div id="game-over" class="game-over" style="display: none;">
+            <h3>Time's Up!</h3>
+            <div class="final-score">Final Score: <span id="final-score">0</span></div>
+            <div class="high-score">High Score: <span id="final-high-score">{{ high_score }}</span></div>
+            <button onclick="location.reload()" class="start-button">Play Again</button>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+    <script>
+        let timeAttackScore = 0;
+        let timerInterval;
+        let timeLeft = 600; // 10 minutes in seconds
+        let gameActive = false;
+        
+        // Initialize the page
+        window.onload = function() {
+            document.getElementById('start-button').addEventListener('click', startGame);
+            document.getElementById('high-score').textContent = {{ high_score }};
+            
+            // Allow pressing Tab inside the code area
+            document.getElementById('code').addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const codeArea = this;
+                    const start = codeArea.selectionStart;
+                    const end = codeArea.selectionEnd;
+        
+                    codeArea.value = codeArea.value.substring(0, start) + "    " + codeArea.value.substring(end);
+                    codeArea.selectionStart = codeArea.selectionEnd = start + 4;
+                }
+            });
+            
+            // Set initial difficulty badge color
+            const badge = document.getElementById('difficulty-badge');
+            const difficulty = {{ question.difficulty }};
+            if (difficulty === 1) {
+                badge.textContent = "Easy";
+                badge.style.backgroundColor = "green";
+            } else if (difficulty === 2) {
+                badge.textContent = "Medium";
+                badge.style.backgroundColor = "orange";
+            } else {
+                badge.textContent = "Hard";
+                badge.style.backgroundColor = "red";
+            }
+        };
+        
+        function startGame() {
+            // Show the game area
+            document.getElementById('game-area').style.display = 'block';
+            document.getElementById('game-over').style.display = 'none';
+            
+            // Disable the start button
+            document.getElementById('start-button').disabled = true;
+            
+            // Reset score
+            timeAttackScore = 0;
+            document.getElementById('current-score').textContent = timeAttackScore;
+            
+            // Start the timer
+            gameActive = true;
+            timeLeft = 600; // 10 minutes
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(function() {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+        
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const timerElement = document.getElementById('timer');
+            
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Add warning classes based on time left
+            if (timeLeft <= 60) { // Last minute
+                timerElement.className = 'timer danger';
+            } else if (timeLeft <= 180) { // Last 3 minutes
+                timerElement.className = 'timer warning';
+            } else {
+                timerElement.className = 'timer';
+            }
+        }
+        
+        function endGame() {
+            clearInterval(timerInterval);
+            gameActive = false;
+            
+            // Hide game area and show game over screen
+            document.getElementById('game-area').style.display = 'none';
+            document.getElementById('game-over').style.display = 'block';
+            
+            // Update final scores
+            document.getElementById('final-score').textContent = timeAttackScore;
+            document.getElementById('final-high-score').textContent = Math.max(timeAttackScore, {{ high_score }});
+            
+            // Enable the start button
+            document.getElementById('start-button').disabled = false;
+        }
+        
+        function submitTimeAttackCode() {
+            if (!gameActive) return;
+            
+            const code = document.getElementById('code').value;
+            
+            fetch('/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    code: code,
+                    challengeMode: true, // Always use challenge mode for time attack
+                    isTimeAttack: true,
+                    timeAttackScore: timeAttackScore
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    document.getElementById('result').innerText = 'Error: ' + data.error;
+                    return;
+                }
+
+                // Check if all tests passed
+                const allPassed = data.passed === data.total;
+                
+                // Track attempts for the current question
+                if (!window.currentQuestionAttempts) {
+                    window.currentQuestionAttempts = 0;
+                }
+                
+                // Update score if all tests passed
+                if (allPassed) {
+                    timeAttackScore++;
+                    document.getElementById('current-score').textContent = timeAttackScore;
+                    
+                    // Update high score if needed
+                    if (data.time_attack_score_updated) {
+                        document.getElementById('high-score').textContent = data.time_attack_high_score;
+                    }
+                    
+                    // Reset attempts counter for the next question
+                    window.currentQuestionAttempts = 0;
+                } else {
+                    // Increment attempts counter
+                    window.currentQuestionAttempts++;
+                    
+                    // Move to next question after 3 failed attempts
+                    if (window.currentQuestionAttempts >= 3) {
+                        // Update to the next question
+                        document.getElementById('prompt').innerText = data.next_question.prompt;
+                        const badge = document.getElementById('difficulty-badge');
+                        const diff = data.next_question.difficulty;
+                        if (diff === 1) {
+                            badge.textContent = "Easy";
+                            badge.style.backgroundColor = "green";
+                        } else if (diff === 2) {
+                            badge.textContent = "Medium";
+                            badge.style.backgroundColor = "orange";
+                        } else {
+                            badge.textContent = "Hard";
+                            badge.style.backgroundColor = "red";
+                        }
+
+                        // Reset code area
+                        document.getElementById('code').value = "# Write your code here...";
+                        
+                        // Reset attempts counter for the next question
+                        window.currentQuestionAttempts = 0;
+                    }
+                }
+
+                // Basic stats
+                let statsHTML = `
+                    Passed ${data.passed} out of ${data.total} tests.<br>
+                `;
+
+                // Show minimal test results
+                let resultsHTML = `<h3>Test Results:</h3><ul>`;
+                data.detailed_results.forEach(test => {
+                    resultsHTML += `<li>${test.pass ? '✅' : '❌'} Test case ${test.pass ? 'passed' : 'failed'}</li>`;
+                });
+                resultsHTML += `</ul>`;
+
+                // Display results
+                let messageHTML;
+                if (allPassed) {
+                    messageHTML = "<h3 style='color:green;'>🎉 All tests passed! Next question:</h3>";
+                } else if (window.currentQuestionAttempts >= 3) {
+                    messageHTML = "<h3 style='color:orange;'>⏭️ Moving to next question after 3 failed attempts.</h3>";
+                } else {
+                    messageHTML = `<h3 style='color:red;'>❌ Some tests failed. Try again! (Attempt ${window.currentQuestionAttempts}/3)</h3>`;
+                }
+                
+                document.getElementById('result').innerHTML = `
+                    ${messageHTML}
+                    ${statsHTML}
+                    ${resultsHTML}
+                `;
+
+                // If all tests passed, update to the next question
+                if (allPassed) {
+                    document.getElementById('prompt').innerText = data.next_question.prompt;
+                    const badge = document.getElementById('difficulty-badge');
+                    const diff = data.next_question.difficulty;
+                    if (diff === 1) {
+                        badge.textContent = "Easy";
+                        badge.style.backgroundColor = "green";
+                    } else if (diff === 2) {
+                        badge.textContent = "Medium";
+                        badge.style.backgroundColor = "orange";
+                    } else {
+                        badge.textContent = "Hard";
+                        badge.style.backgroundColor = "red";
+                    }
+
+                    // Reset code area
+                    document.getElementById('code').value = "# Write your code here...";
+                }
+            });
+        }
+    </script>
+</body>
+</html>

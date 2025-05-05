@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Progress Tracker - AI vs Coder</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Additional styles specific to this page */
+        .nav-menu {
+            position: relative;
+            top: 0;
+            right: 0;
+            width: auto;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .progress-header {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            border-left: 5px solid #4CAF50;
+        }
+        
+        .progress-header h2 {
+            margin: 0;
+            color: #2e7d32;
+        }
+        
+        .progress-header p {
+            margin: 5px 0 0;
+            color: #555;
+        }
+        
+        .chart-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-box {
+            flex: 1;
+            min-width: 300px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .recent-activity {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .activity-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .activity-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .activity-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-item .prompt {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        .activity-item .meta {
+            display: flex;
+            gap: 10px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .activity-item .success {
+            color: #4CAF50;
+            font-weight: 600;
+        }
+        
+        .activity-item .failure {
+            color: #f44336;
+            font-weight: 600;
+        }
+        
+        .difficulty-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: white;
+            background-color: #ccc;
+        }
+        
+        .difficulty-badge.easy {
+            background-color: #4CAF50;
+        }
+        
+        .difficulty-badge.medium {
+            background-color: #FF9800;
+        }
+        
+        .difficulty-badge.hard {
+            background-color: #F44336;
+        }
+        
+        .topic-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: white;
+            background-color: #ccc;
+        }
+        
+        .topic-badge.math {
+            background-color: #2196F3;
+        }
+        
+        .topic-badge.string {
+            background-color: #9C27B0;
+        }
+        
+        .topic-badge.list {
+            background-color: #FF9800;
+        }
+        
+        .topic-badge.recursion {
+            background-color: #795548;
+        }
+        
+        .topic-badge.data_structures {
+            background-color: #607D8B;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-menu">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/game" class="nav-link">Practice</a>
+            <a href="/daily-challenge" class="nav-link">Daily Challenge</a>
+            <a href="/time-attack" class="nav-link">Time Attack</a>
+            <a href="/progress" class="nav-link">Progress</a>
+            <a href="/about" class="nav-link">About</a>
+        </div>
+        
+        <div class="progress-header">
+            <h2>📊 Progress Tracker 📈</h2>
+            <p>Track your coding performance and see your improvement over time</p>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-box">
+                <h3 class="chart-title">Accuracy by Topic</h3>
+                <canvas id="topicChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3 class="chart-title">Accuracy by Difficulty</h3>
+                <canvas id="difficultyChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-box">
+                <h3 class="chart-title">Difficulty Progression</h3>
+                <canvas id="progressionChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3 class="chart-title">Time Spent by Topic (minutes)</h3>
+                <canvas id="timeChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="recent-activity">
+            <h3 class="activity-title">Recent Activity</h3>
+            {% if recent_submissions %}
+            <ul class="activity-list">
+                {% for submission in recent_submissions %}
+                <li class="activity-item">
+                    <span class="prompt">{{ submission.prompt }}</span>
+                    <div class="meta">
+                        <span class="topic-badge {{ submission.type }}">{{ submission.type }}</span>
+                        <span class="difficulty-badge {{ 'easy' if submission.difficulty == 1 else ('medium' if submission.difficulty == 2 else 'hard') }}">
+                            {{ 'Easy' if submission.difficulty == 1 else ('Medium' if submission.difficulty == 2 else 'Hard') }}
+                        </span>
+                        <span class="{{ 'success' if submission.success else 'failure' }}">
+                            {{ '✓ Passed' if submission.success else '✗ Failed' }}
+                        </span>
+                        <span>{{ submission.timestamp }}</span>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="no-data">No recent activity to display. Start solving problems to see your progress!</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Data from Flask
+        const topicAccuracy = {{ topic_accuracy|tojson }};
+        const difficultyAccuracy = {{ difficulty_accuracy|tojson }};
+        const timeSpent = {{ time_spent|tojson }};
+        const difficultyProgression = {{ difficulty_progression|tojson }};
+        
+        // Set up charts when the page loads
+        window.onload = function() {
+            // Topic Accuracy Chart
+            const topicCtx = document.getElementById('topicChart').getContext('2d');
+            const topicChart = new Chart(topicCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(topicAccuracy).map(topic => 
+                        topic.charAt(0).toUpperCase() + topic.slice(1).replace('_', ' ')
+                    ),
+                    datasets: [{
+                        label: 'Accuracy (%)',
+                        data: Object.values(topicAccuracy),
+                        backgroundColor: [
+                            'rgba(33, 150, 243, 0.7)',  // Math
+                            'rgba(156, 39, 176, 0.7)',  // String
+                            'rgba(255, 152, 0, 0.7)',   // List
+                            'rgba(121, 85, 72, 0.7)',   // Recursion
+                            'rgba(96, 125, 139, 0.7)'   // Data Structures
+                        ],
+                        borderColor: [
+                            'rgba(33, 150, 243, 1)',
+                            'rgba(156, 39, 176, 1)',
+                            'rgba(255, 152, 0, 1)',
+                            'rgba(121, 85, 72, 1)',
+                            'rgba(96, 125, 139, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Accuracy (%)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Difficulty Accuracy Chart
+            const difficultyCtx = document.getElementById('difficultyChart').getContext('2d');
+            const difficultyChart = new Chart(difficultyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Easy', 'Medium', 'Hard'],
+                    datasets: [{
+                        label: 'Accuracy (%)',
+                        data: [
+                            difficultyAccuracy['1'] || 0,
+                            difficultyAccuracy['2'] || 0,
+                            difficultyAccuracy['3'] || 0
+                        ],
+                        backgroundColor: [
+                            'rgba(76, 175, 80, 0.7)',  // Easy
+                            'rgba(255, 152, 0, 0.7)',  // Medium
+                            'rgba(244, 67, 54, 0.7)'   // Hard
+                        ],
+                        borderColor: [
+                            'rgba(76, 175, 80, 1)',
+                            'rgba(255, 152, 0, 1)',
+                            'rgba(244, 67, 54, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Accuracy (%)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Difficulty Progression Chart
+            const progressionCtx = document.getElementById('progressionChart').getContext('2d');
+            const progressionChart = new Chart(progressionCtx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: difficultyProgression.length}, (_, i) => i + 1),
+                    datasets: [{
+                        label: 'Difficulty Level',
+                        data: difficultyProgression,
+                        fill: false,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        tension: 0.1,
+                        pointBackgroundColor: difficultyProgression.map(d => {
+                            if (d === 1) return 'rgba(76, 175, 80, 1)';
+                            if (d === 2) return 'rgba(255, 152, 0, 1)';
+                            return 'rgba(244, 67, 54, 1)';
+                        }),
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 3,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    if (value === 1) return 'Easy';
+                                    if (value === 2) return 'Medium';
+                                    if (value === 3) return 'Hard';
+                                    return '';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Difficulty Level'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Problem Number'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Time Spent Chart
+            const timeCtx = document.getElementById('timeChart').getContext('2d');
+            const timeChart = new Chart(timeCtx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(timeSpent).map(topic => 
+                        topic.charAt(0).toUpperCase() + topic.slice(1).replace('_', ' ')
+                    ),
+                    datasets: [{
+                        data: Object.values(timeSpent),
+                        backgroundColor: [
+                            'rgba(33, 150, 243, 0.7)',  // Math
+                            'rgba(156, 39, 176, 0.7)',  // String
+                            'rgba(255, 152, 0, 0.7)',   // List
+                            'rgba(121, 85, 72, 0.7)',   // Recursion
+                            'rgba(96, 125, 139, 0.7)'   // Data Structures
+                        ],
+                        borderColor: [
+                            'rgba(33, 150, 243, 1)',
+                            'rgba(156, 39, 176, 1)',
+                            'rgba(255, 152, 0, 1)',
+                            'rgba(121, 85, 72, 1)',
+                            'rgba(96, 125, 139, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    return `${label}: ${value} minutes`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        };
+    </script>
+</body>
+</html>

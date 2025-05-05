@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Challenge Completed - AI vs Coder</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #43c6ac 0%, #f8ffae 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .success-container {
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            margin-top: 80px;
+            animation: fadeIn 1s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .success-title {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #388e3c;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .success-subtitle {
+            font-size: 1.8rem;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        
+        .success-message {
+            font-size: 1.4rem;
+            color: #666;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        
+        .trophy {
+            font-size: 6rem;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .streak-info {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #c8e6c9;
+            display: inline-block;
+        }
+        
+        .streak-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #388e3c;
+            margin: 10px 0;
+        }
+        
+        .streak-label {
+            font-size: 1rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .home-btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #388e3c;
+            color: white;
+            font-size: 1.2rem;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .home-btn:hover {
+            background-color: #2e7d32;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .countdown {
+            margin-top: 30px;
+            font-size: 1.2rem;
+            color: #666;
+        }
+        
+        .time-remaining {
+            font-weight: bold;
+            color: #ff6f00;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-menu">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/game" class="nav-link">Practice</a>
+        <a href="/daily-challenge" class="nav-link">Daily Challenge</a>
+        <a href="/time-attack" class="nav-link">Time Attack</a>
+        <a href="/progress" class="nav-link">Progress</a>
+        <a href="/about" class="nav-link">About</a>
+    </div>
+
+    <div class="success-container">
+        <div class="trophy">🏆</div>
+        <h1 class="success-title">Great Job!</h1>
+        <h2 class="success-subtitle">You've completed today's challenge!</h2>
+        
+        <p class="success-message">
+            You've successfully solved today's coding challenge. 
+            Come back tomorrow for a new challenge to keep your streak going!
+        </p>
+        
+        <div class="streak-info">
+            <div class="streak-label">Your Daily Streak</div>
+            <div class="streak-value">{{ daily_streak }}</div>
+        </div>
+        
+        <div class="countdown">
+            <p>Next challenge available in: <span class="time-remaining" id="countdown-timer">Loading...</span></p>
+        </div>
+        
+        <a href="/" class="home-btn">Return Home</a>
+    </div>
+
+    <script>
+        // Calculate time until midnight
+        function updateCountdown() {
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+            
+            const timeRemaining = tomorrow - now;
+            
+            const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+            const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+            
+            document.getElementById('countdown-timer').textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Update countdown every second
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    </script>
+</body>
+</html>

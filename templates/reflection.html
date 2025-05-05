@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Reflections - AI vs Coder</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .reflections-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .reflection-card {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .reflection-prompt {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .reflection-text {
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+        
+        .reflection-timestamp {
+            color: #888;
+            font-size: 0.9em;
+            text-align: right;
+        }
+        
+        .no-reflections {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-menu">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/game" class="nav-link">Practice</a>
+            <a href="/daily-challenge" class="nav-link">Daily Challenge</a>
+            <a href="/time-attack" class="nav-link">Time Attack</a>
+            <a href="/progress" class="nav-link">Progress</a>
+            <a href="/about" class="nav-link">About</a>
+        </div>
+        
+        <h1>Your Coding Reflections</h1>
+        
+        <div class="reflections-container">
+            {% if reflections %}
+                {% for reflection in reflections|reverse %}
+                    <div class="reflection-card">
+                        <div class="reflection-prompt">{{ reflection.prompt }}</div>
+                        <div class="reflection-text">{{ reflection.reflection }}</div>
+                        <div class="reflection-timestamp">{{ reflection.timestamp }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-reflections">
+                    <p>You haven't saved any reflections yet.</p>
+                    <p>After solving a problem, you'll have the opportunity to reflect on your solution.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
