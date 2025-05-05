@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 import random
 import datetime
 import hashlib
+import json
 
 # Define a list of reflection prompts
 reflection_prompts = [
@@ -1286,23 +1287,7 @@ def submit():
     # Update streak counter
     streak_broken = False
     daily_challenge_completed = False
-    # Check if this is a daily challenge
     is_daily_challenge = data.get('isDailyChallenge', False)
-
-    if is_daily_challenge:
-        # For daily challenge, don't decrement attempts (unlimited attempts)
-        # And don't move to next question on failure
-        attempts_left = 1000000  # Set to infinity to indicate unlimited attempts
-    else:
-        # For regular practice and time attack, use limited attempts
-        attempts_left -= 1
-        if attempts_left == 0:
-            # Store the current question's solution before moving to next question
-            current_solution = current_question['ai_solution']
-            current_difficulty = max(current_difficulty - 1, 1)
-            move_to_next = True
-            attempts_left = total_attempts
-
     is_time_attack = data.get('isTimeAttack', False)
     time_attack_score_updated = False
     
@@ -1408,7 +1393,7 @@ def submit():
         session['streak'] = 0
 
     move_to_next = False
-    current_solution = current_question['ai_solution']
+    current_solution =  current_question['ai_solution']
     if score == 1:
         current_difficulty = min(current_difficulty + 1, 3)
         move_to_next = True
@@ -1420,8 +1405,8 @@ def submit():
         if is_daily_challenge:
             # For daily challenge, don't decrement attempts (unlimited attempts)
             # And don't move to next question on failure
+            print("Daily challenge mode")
             pass
-
         else:
             # For regular practice and time attack, use limited attempts
             attempts_left -= 1
@@ -1440,8 +1425,7 @@ def submit():
     code_style_analysis = None
     reflection_prompt = None
     feedback_message = None
-    code_comparison = None
-    
+    code_comparison = None 
     if score == 1:  # All tests passed
         # Add a reflection prompt
         reflection_prompt = random.choice(reflection_prompts)
@@ -1449,12 +1433,72 @@ def submit():
         # Analyze code style
         code_style_analysis = analyze_code_style(user_code, current_question['ai_solution'])
         code_comparison = analyze_code_comparison(user_code, current_question['ai_solution'])  # Add this line
-        current_solution = current_question['ai_solution']
 
     else:
+
         # Add feedback message for incorrect solution
         feedback_message = "❌ Your solution is incorrect. Try again!"
-    
+#     print({
+#     "success": True,
+#     "passed": passed,
+#     "total": len(test_cases),
+#     "user_lines": user_lines,
+#     "ai_lines": ai_lines,
+#     "next_question": current_question,
+#     "detailed_results": detailed_results,
+#     "move_to_next": move_to_next,
+#     "attempts_left": attempts_left,
+#     "challenge_mode": challenge_mode,
+#     "show_hint": show_hint,
+#     "hint": hint,
+#     "question_attempts": question_attempts[question_id],
+#     "streak": session.get('streak', 0),
+#     "max_streak": session.get('max_streak', 0),
+#     "streak_broken": streak_broken,
+#     "daily_challenge_completed": daily_challenge_completed,
+#     "daily_streak": session.get('daily_streak', 0),
+#     "max_daily_streak": session.get('max_daily_streak', 0),
+#     "time_attack_score_updated": time_attack_score_updated,
+#     "time_attack_high_score": session.get('time_attack_high_score', 0),
+#     "topic": current_question.get('type', 'other'),
+#     "difficulty": current_question.get('difficulty', 1),
+#     "reflection_prompt": reflection_prompt,
+#     "code_style_analysis": code_style_analysis,
+#     "current_solution": current_solution,
+#     "feedback_message": feedback_message,
+#     "code_comparison": code_comparison  # Add this line
+# })
+    # print("----")
+    print(json.loads(json.dumps({
+        "success": True,
+    "passed": passed,
+    "total": len(test_cases),
+    "user_lines": user_lines,
+    "ai_lines": ai_lines,
+    "next_question": current_question,
+    "detailed_results": detailed_results,
+    "move_to_next": move_to_next,
+    "attempts_left": attempts_left,
+    "challenge_mode": challenge_mode,
+    "show_hint": show_hint,
+    "hint": hint,
+    "question_attempts": question_attempts[question_id],
+    "streak": session.get('streak', 0),
+    "max_streak": session.get('max_streak', 0),
+    "streak_broken": streak_broken,
+    "daily_challenge_completed": daily_challenge_completed,
+    "daily_streak": session.get('daily_streak', 0),
+    "max_daily_streak": session.get('max_daily_streak', 0),
+    "time_attack_score_updated": time_attack_score_updated,
+    "time_attack_high_score": session.get('time_attack_high_score', 0),
+    "topic": current_question.get('type', 'other'),
+    "difficulty": current_question.get('difficulty', 1),
+    "reflection_prompt": reflection_prompt,
+    "code_style_analysis": code_style_analysis,
+    "current_solution": current_solution,
+    "feedback_message": feedback_message,
+    "code_comparison": code_comparison  # Add this line
+})))
     return jsonify({
     "success": True,
     "passed": passed,
