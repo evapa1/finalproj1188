@@ -740,3 +740,34 @@ input:checked + .slider:before {
 .comparison-feedback li {
     margin-bottom: 5px;
 }
+
+.ai-solution-btn {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-weight: bold;
+}
+
+.ai-solution-btn:hover {
+    background-color: #0b7dda;
+}
+
+.ai-solution-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.ai-code {
+    background-color: #f5f5f5;
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 10px;
+    overflow-x: auto;
+    border-left: 4px solid #2196F3;
+    font-family: monospace;
+    white-space: pre-wrap;
+}

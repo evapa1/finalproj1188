@@ -251,7 +251,8 @@ function submitCode() {
                 const solutionBox = document.createElement('pre');
                 solutionBox.className = "ai-code";
                 // Use the current solution instead of the next question's solution
-                solutionBox.innerText = data.current_solution || "Solution not available";
+                solutionBox.innerText = data.current_solution;
+                console.log(solutionBox)
                 document.getElementById('result').appendChild(solutionBox);
                 showAISolutionButton.disabled = true;
             };

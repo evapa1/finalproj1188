@@ -401,15 +401,15 @@
                     ${hintHTML}
                     ${resultsHTML}
                 `;
-            })
-            .catch(error => {
-                console.error("Error submitting code:", error);
-                document.getElementById('result').innerHTML = `
-                    <div style="color: red; font-weight: bold;">
-                        Error submitting code. Please try again.
-                    </div>
-                `;
             });
+            // .catch(error => {
+            //     console.error("Error submitting code:", error);
+            //     document.getElementById('result').innerHTML = `
+            //         <div style="color: red; font-weight: bold;">
+            //             Error submitting code. Please try again.
+            //         </div>
+            //     `;
+            // });
         }
     </script>
 </body>

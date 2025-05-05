@@ -1286,7 +1286,23 @@ def submit():
     # Update streak counter
     streak_broken = False
     daily_challenge_completed = False
+    # Check if this is a daily challenge
     is_daily_challenge = data.get('isDailyChallenge', False)
+
+    if is_daily_challenge:
+        # For daily challenge, don't decrement attempts (unlimited attempts)
+        # And don't move to next question on failure
+        attempts_left = float('inf')  # Set to infinity to indicate unlimited attempts
+    else:
+        # For regular practice and time attack, use limited attempts
+        attempts_left -= 1
+        if attempts_left == 0:
+            # Store the current question's solution before moving to next question
+            current_solution = current_question['ai_solution']
+            current_difficulty = max(current_difficulty - 1, 1)
+            move_to_next = True
+            attempts_left = total_attempts
+
     is_time_attack = data.get('isTimeAttack', False)
     time_attack_score_updated = False
     
@@ -1392,7 +1408,7 @@ def submit():
         session['streak'] = 0
 
     move_to_next = False
-    current_solution = None
+    current_solution = current_question['ai_solution']
     if score == 1:
         current_difficulty = min(current_difficulty + 1, 3)
         move_to_next = True
@@ -1405,6 +1421,7 @@ def submit():
             # For daily challenge, don't decrement attempts (unlimited attempts)
             # And don't move to next question on failure
             pass
+
         else:
             # For regular practice and time attack, use limited attempts
             attempts_left -= 1
@@ -1423,6 +1440,7 @@ def submit():
     code_style_analysis = None
     reflection_prompt = None
     feedback_message = None
+    code_comparison = None
     
     if score == 1:  # All tests passed
         # Add a reflection prompt
@@ -1431,6 +1449,7 @@ def submit():
         # Analyze code style
         code_style_analysis = analyze_code_style(user_code, current_question['ai_solution'])
         code_comparison = analyze_code_comparison(user_code, current_question['ai_solution'])  # Add this line
+        current_solution = current_question['ai_solution']
 
     else:
         # Add feedback message for incorrect solution
